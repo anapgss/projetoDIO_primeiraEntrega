@@ -1,0 +1,210 @@
+CÓDIGO_CYPHER
+
+CRIAÇÃO DAS CONSTRAINTS
+
+CREATE CONSTRAINT user_id IF NOT EXISTS
+FOR (u:User) REQUIRE u.id IS UNIQUE;
+
+CREATE CONSTRAINT movie_id IF NOT EXISTS
+FOR (m:Movie) REQUIRE m.id IS UNIQUE;
+
+CREATE CONSTRAINT series_id IF NOT EXISTS
+FOR (s:Series) REQUIRE s.id IS UNIQUE;
+
+CREATE CONSTRAINT actor_id IF NOT EXISTS
+FOR (a:Actor) REQUIRE a.id IS UNIQUE;
+
+CREATE CONSTRAINT director_id IF NOT EXISTS
+FOR (d:Director) REQUIRE d.id IS UNIQUE;
+
+CREATE CONSTRAINT genre_id IF NOT EXISTS
+FOR (g:Genre) REQUIRE g.id IS UNIQUE;
+
+
+CRIÇÃO DOS NÓS DE USUÁRIOS
+
+CREATE
+(u1:User {id: 1, name: "User 1"}),
+(u2:User {id: 2, name: "User 2"}),
+(u3:User {id: 3, name: "User 3"}),
+(u4:User {id: 4, name: "User 4"}),
+(u5:User {id: 5, name: "User 5"}),
+(u6:User {id: 6, name: "User 6"}),
+(u7:User {id: 7, name: "User 7"}),
+(u8:User {id: 8, name: "User 8"}),
+(u9:User {id: 9, name: "User 9"}),
+(u10:User {id: 10, name: "User 10"});
+
+CRIÇÃO DOS NÓS DE FILMES E SÉRIES
+
+CREATE
+(m1:Movie  {id: 1,  title: "Inception"}),
+(m2:Movie  {id: 2,  title: "Interstellar"}),
+(m3:Movie  {id: 3,  title: "Parasite"}),
+(m4:Movie  {id: 4,  title: "The Matrix"}),
+(m5:Movie  {id: 5,  title: "Fight Club"}),
+(s1:Series {id: 6,  title: "Dark"}),
+(s2:Series {id: 7,  title: "Breaking Bad"}),
+(s3:Series {id: 8,  title: "Stranger Things"}),
+(s4:Series {id: 9,  title: "Chernobyl"}),
+(s5:Series {id: 10, title: "The Crown"});
+
+CRIÇÃO DOS NÓS DOS ATORES
+
+CREATE
+(a1:Actor {id: 1, name: "Leonardo DiCaprio"}),
+(a2:Actor {id: 2, name: "Matthew McConaughey"}),
+(a3:Actor {id: 3, name: "Song Kang-ho"}),
+(a4:Actor {id: 4, name: "Keanu Reeves"}),
+(a5:Actor {id: 5, name: "Brad Pitt"}),
+(a6:Actor {id: 6, name: "Louis Hofmann"}),
+(a7:Actor {id: 7, name: "Bryan Cranston"}),
+(a8:Actor {id: 8, name: "Millie Bobby Brown"}),
+(a9:Actor {id: 9, name: "Jared Harris"}),
+(a10:Actor {id: 10, name: "Claire Foy"});
+
+CRIÇÃO DOS NÓS DOS DIRETORES
+
+CREATE
+(d1:Director {id: 1, name: "Christopher Nolan"}),
+(d2:Director {id: 2, name: "Bong Joon-ho"}),
+(d3:Director {id: 3, name: "Lana Wachowski"}),
+(d4:Director {id: 4, name: "David Fincher"}),
+(d5:Director {id: 5, name: "Baran bo Odar"});
+
+CRIÇÃO DOS NÓS DOS GÊNEROS
+
+CREATE
+(g1:Genre {id: 1, name: "Sci-Fi"}),
+(g2:Genre {id: 2, name: "Drama"}),
+(g3:Genre {id: 3, name: "Thriller"});
+
+CRIÇÃO DOS RELACIOANAMENTOS ATORES - FILMES
+
+MATCH
+(m1:Movie {title: "Inception"}),
+(m2:Movie {title: "Interstellar"}),
+(m3:Movie {title: "Parasite"}),
+(m4:Movie {title: "The Matrix"}),
+(m5:Movie {title: "Fight Club"}),
+(s1:Series {title: "Dark"}),
+(s2:Series {title: "Breaking Bad"}),
+(s3:Series {title: "Stranger Things"}),
+(s4:Series {title: "Chernobyl"}),
+(s5:Series {title: "The Crown"}),
+
+(a1:Actor {name: "Leonardo DiCaprio"}),
+(a2:Actor {name: "Matthew McConaughey"}),
+(a3:Actor {name: "Song Kang-ho"}),
+(a4:Actor {name: "Keanu Reeves"}),
+(a5:Actor {name: "Brad Pitt"}),
+(a6:Actor {name: "Louis Hofmann"}),
+(a7:Actor {name: "Bryan Cranston"}),
+(a8:Actor {name: "Millie Bobby Brown"}),
+(a9:Actor {name: "Jared Harris"}),
+(a10:Actor {name: "Claire Foy"})
+
+CREATE
+(a1)-[:ACTED_IN]->(m1),
+(a2)-[:ACTED_IN]->(m2),
+(a3)-[:ACTED_IN]->(m3),
+(a4)-[:ACTED_IN]->(m4),
+(a5)-[:ACTED_IN]->(m5),
+(a6)-[:ACTED_IN]->(s1),
+(a7)-[:ACTED_IN]->(s2),
+(a8)-[:ACTED_IN]->(s3),
+(a9)-[:ACTED_IN]->(s4),
+(a10)-[:ACTED_IN]->(s5);
+
+CRIÇÃO DOS RELACIOANAMENTOS DIRETOR - FILMES
+
+MATCH
+(d1:Director {name: "Christopher Nolan"}),
+(d2:Director {name: "Bong Joon-ho"}),
+(d3:Director {name: "Lana Wachowski"}),
+(d4:Director {name: "David Fincher"}),
+(d5:Director {name: "Baran bo Odar"}),
+
+(m1:Movie {title: "Inception"}),
+(m2:Movie {title: "Interstellar"}),
+(m3:Movie {title: "Parasite"}),
+(m4:Movie {title: "The Matrix"}),
+(m5:Movie {title: "Fight Club"}),
+
+(s1:Series {title: "Dark"})
+
+CREATE
+(d1)-[:DIRECTED]->(m1),
+(d1)-[:DIRECTED]->(m2),
+(d2)-[:DIRECTED]->(m3),
+(d3)-[:DIRECTED]->(m4),
+(d4)-[:DIRECTED]->(m5),
+(d5)-[:DIRECTED]->(s1);
+
+CRIÇÃO DOS RELACIOANAMENTOS USUÁRIOS - FILMES
+
+MATCH
+(u1:User {name: "User 1"}),
+(u2:User {name: "User 2"}),
+(u3:User {name: "User 3"}),
+(u4:User {name: "User 4"}),
+(u5:User {name: "User 5"}),
+
+(m1:Movie {title: "Inception"}),
+(m2:Movie {title: "Interstellar"}),
+(m3:Movie {title: "Parasite"}),
+(m4:Movie {title: "The Matrix"}),
+(m5:Movie {title: "Fight Club"}),
+(s1:Series {title: "Dark"}),
+(s2:Series {title: "Breaking Bad"}),
+(s3:Series {title: "Stranger Things"}),
+(s4:Series {title: "Chernobyl"}),
+(s5:Series {title: "The Crown"})
+
+CREATE
+(u1)-[:WATCHED {rating: 5}]->(m1),
+(u1)-[:WATCHED {rating: 4}]->(s1),
+
+(u2)-[:WATCHED {rating: 5}]->(m2),
+(u2)-[:WATCHED {rating: 4}]->(s2),
+
+(u3)-[:WATCHED {rating: 4}]->(m3),
+(u3)-[:WATCHED {rating: 5}]->(s3),
+
+(u4)-[:WATCHED {rating: 5}]->(m4),
+(u4)-[:WATCHED {rating: 4}]->(s4),
+
+(u5)-[:WATCHED {rating: 4}]->(m5),
+(u5)-[:WATCHED {rating: 5}]->(s5);
+
+
+CRIÇÃO DOS RELACIOANAMENTOS FILMES - GÊNERO
+
+MATCH
+(m1:Movie {title: "Inception"}),
+(m2:Movie {title: "Interstellar"}),
+(m3:Movie {title: "Parasite"}),
+(m4:Movie {title: "The Matrix"}),
+(m5:Movie {title: "Fight Club"}),
+(s1:Series {title: "Dark"}),
+(s2:Series {title: "Breaking Bad"}),
+(s3:Series {title: "Stranger Things"}),
+(s4:Series {title: "Chernobyl"}),
+(s5:Series {title: "The Crown"}),
+
+(g1:Genre {name: "Sci-Fi"}),
+(g2:Genre {name: "Drama"}),
+(g3:Genre {name: "Thriller"})
+
+CREATE
+(m1)-[:IN_GENRE]->(g1),
+(m2)-[:IN_GENRE]->(g1),
+(m3)-[:IN_GENRE]->(g3),
+(m4)-[:IN_GENRE]->(g1),
+(m5)-[:IN_GENRE]->(g3),
+(s1)-[:IN_GENRE]->(g1),
+(s2)-[:IN_GENRE]->(g3),
+(s3)-[:IN_GENRE]->(g1),
+(s4)-[:IN_GENRE]->(g2),
+(s5)-[:IN_GENRE]->(g2);
+
