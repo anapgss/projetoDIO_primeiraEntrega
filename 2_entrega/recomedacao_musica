@@ -1,0 +1,139 @@
+DEMOSTRAÇÃO CÓDIGO CYPHER + APOC PARA ALGORITMO DE RECOMEDAÇÃO DE MÚSICAS 
+
+**CRIAÇÃO DAS CONSTRAINTS
+
+CREATE CONSTRAINT user_id IF NOT EXISTS
+FOR (u:User_)
+REQUIRE u.id IS UNIQUE;
+
+CREATE CONSTRAINT song_id IF NOT EXISTS
+FOR (s:Song)
+REQUIRE s.id IS UNIQUE;
+
+CREATE CONSTRAINT artist_id IF NOT EXISTS
+FOR (a:Artist)
+REQUIRE a.id IS UNIQUE;
+
+**CRIAÇÃO DE 15 USUÁRIOS
+
+UNWIND [
+  {id:1, name:"Ana"}, {id:2, name:"Bruno"}, {id:3, name:"Carlos"},
+  {id:4, name:"Daniela"}, {id:5, name:"Eduardo"}, {id:6, name:"Fernanda"},
+  {id:7, name:"Gabriel"}, {id:8, name:"Helena"}, {id:9, name:"Igor"},
+  {id:10, name:"Juliana"}, {id:11, name:"Lucas"}, {id:12, name:"Marina"},
+  {id:13, name:"Natalia"}, {id:14, name:"Otavio"}, {id:15, name:"Paula"}
+] AS u
+CREATE (:User_ {id:u.id, name:u.name});
+
+**CRIAÇÃO DOS CANTORES
+
+UNWIND [
+  {id:1, name:"Taylor Swift"},
+  {id:2, name:"The Weeknd"},
+  {id:3, name:"Coldplay"},
+  {id:4, name:"Billie Eilish"},
+  {id:5, name:"Daft Punk"}
+] AS a
+CREATE (:Artist {id:a.id, name:a.name});
+
+**CRIAÇÃO DOS GÊNEROS
+
+UNWIND ["Pop","Rock","Electronic","Indie","Alternative"] AS g
+CREATE (:Genre {name:g});
+
+**CRIAÇÃO DAS MÚSICAS E SEUS RESPECTIVOS GÊNEROS 
+
+UNWIND [
+  {id:1, title:"Anti-Hero", artist:"Taylor Swift", genre:"Pop"},
+  {id:2, title:"Blinding Lights", artist:"The Weeknd", genre:"Pop"},
+  {id:3, title:"Yellow", artist:"Coldplay", genre:"Rock"},
+  {id:4, title:"Viva La Vida", artist:"Coldplay", genre:"Rock"},
+  {id:5, title:"Bad Guy", artist:"Billie Eilish", genre:"Alternative"},
+  {id:6, title:"Happier Than Ever", artist:"Billie Eilish", genre:"Indie"},
+  {id:7, title:"Get Lucky", artist:"Daft Punk", genre:"Electronic"},
+  {id:8, title:"Instant Crush", artist:"Daft Punk", genre:"Electronic"},
+  {id:9, title:"Starboy", artist:"The Weeknd", genre:"Pop"},
+  {id:10, title:"Style", artist:"Taylor Swift", genre:"Pop"}
+] AS s
+
+MATCH (a:Artist {name:s.artist})
+MATCH (g:Genre {name:s.genre})
+CREATE (song:Song {id:s.id, title:s.title})
+CREATE (a)-[:CREATED]->(song)
+CREATE (song)-[:IN_GENRE]->(g);
+
+**CRIAÇÃO DAS INTERAÇÕES COM AS MÚSICAS E CANTORES
+
+UNWIND [
+  {u:1, s:1, c:20},{u:1, s:2, c:10},{u:1, s:7, c:5},
+  {u:2, s:2, c:30},{u:2, s:9, c:15},
+  {u:3, s:3, c:25},{u:3, s:4, c:20},
+  {u:4, s:5, c:18},{u:4, s:6, c:10},
+  {u:5, s:7, c:22},{u:5, s:8, c:12},
+  {u:6, s:1, c:14},{u:6, s:10, c:16},
+  {u:7, s:3, c:10},{u:7, s:4, c:8},
+  {u:8, s:5, c:20},{u:8, s:6, c:15},
+  {u:9, s:9, c:25},
+  {u:10, s:2, c:18},{u:10, s:7, c:10},
+  {u:11, s:8, c:20},
+  {u:12, s:10, c:22},
+  {u:13, s:1, c:12},
+  {u:14, s:4, c:14},
+  {u:15, s:6, c:16}
+] AS x
+
+MATCH (u:User {id:x.u})
+MATCH (s:Song {id:x.s})
+CREATE (u)-[:LISTENED {count:x.c}]->(s);
+
+
+MATCH (u:User)-[:LISTENED]->(s:Song)
+WHERE rand() < 0.4
+CREATE (u)-[:LIKED]->(s);
+
+MATCH (u:User), (a:Artist)
+WHERE rand() < 0.2
+CREATE (u)-[:FOLLOWS]->(a);
+
+
+**CÓDIGOS DE RECOMENDAÇÃO
+
+-POR SIMILARIDADE DE USUÁRIOS
+
+MATCH (u:User {name:"Ana"})-[:LISTENED]->(s:Song)<-[:LISTENED]-(other:User)
+WHERE u <> other
+
+WITH u, other, collect(s.id) AS commonSongs
+
+MATCH (other)-[:LISTENED]->(rec:Song)
+WHERE NOT (u)-[:LISTENED]->(rec)
+
+RETURN
+  rec.title AS recomendacao,
+  size(commonSongs) AS score
+ORDER BY score DESC
+LIMIT 5;
+
+-POR GÊNERO
+
+MATCH (u:User {name:"Ana"})-[:LISTENED]->(:Song)-[:IN_GENRE]->(g:Genre)
+WITH u, g, count(*) AS freq
+ORDER BY freq DESC
+LIMIT 1
+
+MATCH (rec:Song)-[:IN_GENRE]->(g)
+WHERE NOT (u)-[:LISTENED]->(rec)
+
+RETURN rec.title, g.name;
+
+-ENTRE USUÁRIOS (INTERSEÇÃO)
+
+MATCH (u1:User)-[:LISTENED]->(s:Song)<-[:LISTENED]-(u2:User)
+WHERE u1 <> u2
+
+WITH u1, u2, collect(s.id) AS songs
+RETURN
+  u1.name,
+  u2.name,
+  size(apoc.coll.toSet(songs)) AS similarity
+ORDER BY similarity DESC;
