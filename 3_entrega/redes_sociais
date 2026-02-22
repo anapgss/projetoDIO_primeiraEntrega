@@ -1,0 +1,486 @@
+
+**CRIAÇÃO DAS CONSTRAINTS
+
+CREATE CONSTRAINT user_name_unique
+IF NOT EXISTS
+FOR (u:User)
+REQUIRE u.name IS UNIQUE;
+
+**CRIAÇÃO DE 30 USUÁRIOS
+
+UNWIND [
+"ana.silva",
+"bruno.martins",
+"carla.rocha",
+"diego.alves",
+"eduarda.lima",
+"felipe.santos",
+"gabriela.pires",
+"henrique.costa",
+"isabela.nunes",
+"joao.vieira",
+"karen.melo",
+"lucas.ribeiro",
+"marina.teixeira",
+"nicolas.barros",
+"olivia.freitas",
+"paulo.gomes",
+"rafaela.torres",
+"thiago.araujo",
+"vanessa.moura",
+"william.farias",
+"beatriz.cunha",
+"caio.peixoto",
+"daniela.lopes",
+"enzo.batista",
+"fernanda.ramos",
+"gustavo.reis",
+"helena.pacheco",
+"igor.machado",
+"juliana.borges",
+"leonardo.azevedo"
+] AS username
+CREATE (:User_name {
+  name: username,
+  joinedAt: date()
+});
+
+**CRIAÇÃO DOS TÓPICOS DOS POSTS
+
+CREATE
+(:Topic {name:"Tecnologia"}),
+(:Topic {name:"Inteligência Artificial"}),
+(:Topic {name:"Data Science"}),
+(:Topic {name:"Negócios"}),
+(:Topic {name:"Marketing Digital"});
+
+
+**CRIAÇÃO DOS POSTS
+
+UNWIND [
+  {postId: 1, content: "Aprendendo Neo4j e grafos hoje", author: "ana.silva"},
+  {postId: 2, content: "IA está transformando o mercado", author: "bruno.martins"},
+  {postId: 3, content: "Data Science não é só Python", author: "carla.rocha"},
+  {postId: 4, content: "Grafos ajudam muito em redes sociais", author: "diego.alves"},
+  {postId: 5, content: "Marketing orientado a dados é o futuro", author: "eduarda.lima"},
+
+  {postId: 6, content: "Neo4j é ótimo para sistemas de recomendação", author: "ana.silva"},
+  {postId: 7, content: "Grafos ajudam a descobrir conexões ocultas", author: "bruno.martins"},
+  {postId: 8, content: "Python com grafos é muito poderoso", author: "carla.rocha"},
+  {postId: 9, content: "IA generativa vai dominar muitos produtos", author: "diego.alves"},
+  {postId:10, content: "Dados bem modelados fazem toda a diferença", author: "eduarda.lima"},
+
+  {postId:11, content: "Redes sociais são grafos na prática", author: "lucas.ribeiro"},
+  {postId:12, content: "Recomendação funciona melhor com grafos", author: "marina.teixeira"},
+  {postId:13, content: "Cypher é mais intuitivo do que SQL", author: "nicolas.barros"},
+  {postId:14, content: "Relacionamentos são cidadãos de primeira classe", author: "olivia.freitas"},
+  {postId:15, content: "Machine Learning + Grafos é o futuro", author: "paulo.gomes"}
+] AS row
+
+
+MATCH (u:User_name {name: row.author})
+
+
+MERGE (p:Post {id: row.postId})
+
+ON CREATE SET
+  p.content = row.content,
+  p.createdAt = datetime()
+
+MERGE (u)-[:POSTED]->(p);
+
+**CRIAÇÃO DA RELAÇÃO ENTRE OS POSTS E E TÓPICOS
+
+UNWIND [
+  {postId: 1, topic: "Tecnologia"},
+  {postId: 2, topic: "Inteligência Artificial"},
+  {postId: 3, topic: "Data Science"},
+  {postId: 4, topic: "Tecnologia"},
+  {postId: 5, topic: "Marketing Digital"},
+
+  {postId: 6, topic: "Tecnologia"},
+  {postId: 7, topic: "Tecnologia"},
+  {postId: 8, topic: "Data Science"},
+  {postId: 9, topic: "Inteligência Artificial"},
+  {postId:10, topic: "Negócios"},
+
+  {postId:11, topic: "Tecnologia"},
+  {postId:12, topic: "Tecnologia"},
+  {postId:13, topic: "Data Science"},
+  {postId:14, topic: "Tecnologia"},
+  {postId:15, topic: "Inteligência Artificial"}
+] AS row
+
+MATCH (p:Post {id: row.postId})
+MATCH (t:Topic {name: row.topic})
+MERGE (p)-[:ABOUT]->(t);
+
+**CRIAÇÃO DA RELAÇÃO ENTRE OS USUÁRIOS
+
+UNWIND [
+  {from:"ana.silva",     to:"bruno.martins"},
+  {from:"ana.silva",     to:"carla.rocha"},
+  {from:"bruno.martins", to:"diego.alves"},
+  {from:"carla.rocha",   to:"ana.silva"},
+  {from:"lucas.ribeiro", to:"ana.silva"},
+  {from:"marina.teixeira", to:"ana.silva"},
+  {from:"marina.teixeira", to:"bruno.martins"},
+  {from:"marina.teixeira", to:"ana.silva"},
+  {from:"nicolas.barros", to:"ana.silva"},
+  {from:"olivia.freitas",   to:"paulo.gomes"},
+  {from:"paulo.gomes",   to:"olivia.freitas"},
+  {from:"caio.peixoto",   to:"olivia.freitas"},
+  {from:"beatriz.cunha",   to:"daniela.lopes"},
+  {from:"gustavo.reis",   to:"helena.pacheco"},
+  {from:"igor.machado",   to:"juliana.borges"},
+  {from:"leonardo.azevedo",   to:"juliana.borges"},
+  {from:"isabela.nunes",   to:"joao.vieira"},
+  {from:"henrique.costa",   to:"gabriela.pires"},
+  {from:"felipe.santos",   to:"karen.melo"}
+] AS row
+
+MATCH (u1:User_name {name: row.from})
+MATCH (u2:User_name {name: row.to})
+MERGE (u1)-[:FOLLOWS]->(u2);
+
+**CRIAÇÃO DA RELAÇÃO ENTRE OS USUÁRIOS (CURTIDAS)
+
+UNWIND [
+  // Post 1 – ana.silva 
+  {user:"felipe.santos",   postId:1},
+  {user:"gabriela.pires",  postId:1},
+  {user:"henrique.costa",  postId:1},
+  {user:"isabela.nunes",   postId:1},
+  {user:"joao.vieira",     postId:1},
+
+  // Post 2 – bruno.martins
+  {user:"lucas.ribeiro",   postId:2},
+  {user:"marina.teixeira", postId:2},
+  {user:"nicolas.barros",  postId:2},
+  {user:"paulo.gomes",     postId:2},
+
+  // Post 3 – carla.rocha
+  {user:"ana.silva",       postId:3},
+  {user:"bruno.martins",   postId:3},
+  {user:"eduarda.lima",    postId:3},
+
+  // Post 4 – diego.alves
+  {user:"felipe.santos",   postId:4},
+  {user:"gabriela.pires",  postId:4},
+  {user:"lucas.ribeiro",   postId:4},
+
+  // Post 5 – eduarda.lima
+  {user:"marina.teixeira", postId:5},
+  {user:"nicolas.barros",  postId:5},
+
+  // Post 6 – ana.silva
+  {user:"henrique.costa",  postId:6},
+  {user:"isabela.nunes",   postId:6},
+  {user:"joao.vieira",     postId:6},
+
+  // Post 7 – bruno.martins
+  {user:"ana.silva",       postId:7},
+  {user:"carla.rocha",     postId:7},
+
+  // Post 8 – carla.rocha
+  {user:"bruno.martins",   postId:8},
+  {user:"diego.alves",     postId:8},
+
+  // Post 9 – diego.alves
+  {user:"lucas.ribeiro",   postId:9},
+  {user:"marina.teixeira", postId:9},
+  {user:"olivia.freitas",  postId:9},
+
+  // Post 10 – eduarda.lima
+  {user:"paulo.gomes",     postId:10},
+
+  // Post 11 – lucas.ribeiro
+  {user:"ana.silva",       postId:11},
+  {user:"bruno.martins",   postId:11},
+
+  // Post 12 – marina.teixeira
+  {user:"carla.rocha",     postId:12},
+  {user:"eduarda.lima",    postId:12},
+
+  // Post 13 – nicolas.barros
+  {user:"lucas.ribeiro",   postId:13},
+
+  // Post 14 – olivia.freitas
+  {user:"marina.teixeira", postId:14},
+  {user:"paulo.gomes",     postId:14},
+
+  // Post 15 – paulo.gomes
+  {user:"ana.silva",       postId:15},
+  {user:"bruno.martins",   postId:15},
+  {user:"carla.rocha",     postId:15}
+] AS row
+
+MATCH (u:User_name {name: row.user})
+MATCH (p:Post {id: row.postId})
+MERGE (u)-[:LIKED]->(p);
+
+
+**CRIAÇÃO DA RELAÇÃO ENTRE OS USUÁRIOS (COMENTÁRIOS)
+
+UNWIND [
+  {id:1,  text:"Conteúdo excelente!"},
+  {id:2,  text:"Muito bom, concordo"},
+  {id:3,  text:"Explicação clara"},
+  {id:4,  text:"Aprendi bastante"},
+  {id:5,  text:"Poderia aprofundar mais"},
+  {id:6,  text:"Tema muito relevante"},
+  {id:7,  text:"Gostei do exemplo"},
+  {id:8,  text:"Bem direto ao ponto"},
+  {id:9,  text:"Me ajudou muito"},
+  {id:10, text:"Ótima abordagem"},
+  {id:11, text:"Ficou fácil de entender"},
+  {id:12, text:"Esperava mais detalhes"}
+] AS row
+
+MERGE (:Comment {id: row.id, text: row.text});
+
+
+UNWIND [
+  {user:"rafaela.torres",  commentId:1,  postId:1},
+  {user:"thiago.araujo",   commentId:2,  postId:1},
+  {user:"vanessa.moura",   commentId:3,  postId:2},
+  {user:"william.farias",  commentId:4,  postId:2},
+  {user:"william.farias",  commentId:6,  postId:2},
+
+  {user:"ana.silva",       commentId:5,  postId:3},
+  {user:"bruno.martins",   commentId:6,  postId:3},
+
+  {user:"carla.rocha",     commentId:7,  postId:4},
+  {user:"diego.alves",     commentId:8,  postId:4},
+
+  {user:"eduarda.lima",    commentId:9,  postId:5},
+  {user:"lucas.ribeiro",   commentId:10, postId:5},
+
+  {user:"marina.teixeira", commentId:11, postId:6},
+  {user:"nicolas.barros",  commentId:12, postId:6}
+] AS row
+
+MATCH (u:User_name {name: row.user})
+MATCH (c:Comment {id: row.commentId})
+MATCH (p:Post {id: row.postId})
+
+MERGE (u)-[:COMMENTED]->(c)
+MERGE (c)-[:ON]->(p);
+
+
+**PERGUNTAS PARA INSIGHTS 
+
+-Quem tem mais curtidas?
+
+MATCH (u:User_name)-[:POSTED]->(p:Post)<-[:LIKED]-()
+RETURN u.name AS usuario,
+       COUNT(*) AS totalCurtidas
+ORDER BY totalCurtidas DESC;
+
+****RESPOSTA****
+╒═════════════════╤═════════════╕
+│usuario          │totalCurtidas│
+╞═════════════════╪═════════════╡
+│"ana.silva"      │8            │
+├─────────────────┼─────────────┤
+│"bruno.martins"  │6            │
+├─────────────────┼─────────────┤
+│"diego.alves"    │6            │
+├─────────────────┼─────────────┤
+│"carla.rocha"    │5            │
+├─────────────────┼─────────────┤
+│"eduarda.lima"   │3            │
+├─────────────────┼─────────────┤
+│"paulo.gomes"    │3            │
+├─────────────────┼─────────────┤
+│"lucas.ribeiro"  │2            │
+├─────────────────┼─────────────┤
+│"marina.teixeira"│2            │
+├─────────────────┼─────────────┤
+│"olivia.freitas" │2            │
+├─────────────────┼─────────────┤
+│"nicolas.barros" │1            │
+└─────────────────┴─────────────┘
+
+
+
+- Qual post tem mais engajamento (curtidas + comentários)?
+
+MATCH (p:Post)
+OPTIONAL MATCH (p)<-[:LIKED]-()
+WITH p, COUNT(*) AS curtidas
+OPTIONAL MATCH (p)<-[:ON]-(:Comment)
+WITH p, curtidas, COUNT(*) AS comentarios
+RETURN p.id AS postId,
+       p.content AS conteudo,
+       curtidas,
+       comentarios,
+       (curtidas + comentarios) AS engajamentoTotal
+ORDER BY engajamentoTotal DESC;
+
+
+****RESPOSTA****
+
+╒══════╤═════════════════════════════════════════════════╤════════╤═══════════╤════════════════╕
+│postId│conteudo                                         │curtidas│comentarios│engajamentoTotal│
+╞══════╪═════════════════════════════════════════════════╪════════╪═══════════╪════════════════╡
+│1     │"Aprendendo Neo4j e grafos hoje"                 │5       │2          │7               │
+├──────┼─────────────────────────────────────────────────┼────────┼───────────┼────────────────┤
+│2     │"IA está transformando o mercado"                │4       │3          │7               │
+├──────┼─────────────────────────────────────────────────┼────────┼───────────┼────────────────┤
+│3     │"Data Science não é só Python"                   │3       │2          │5               │
+├──────┼─────────────────────────────────────────────────┼────────┼───────────┼────────────────┤
+│4     │"Grafos ajudam muito em redes sociais"           │3       │2          │5               │
+├──────┼─────────────────────────────────────────────────┼────────┼───────────┼────────────────┤
+│6     │"Neo4j é ótimo para sistemas de recomendação"    │3       │2          │5               │
+├──────┼─────────────────────────────────────────────────┼────────┼───────────┼────────────────┤
+│5     │"Marketing orientado a dados é o futuro"         │2       │2          │4               │
+├──────┼─────────────────────────────────────────────────┼────────┼───────────┼────────────────┤
+│9     │"IA generativa vai dominar muitos produtos"      │3       │1          │4               │
+├──────┼─────────────────────────────────────────────────┼────────┼───────────┼────────────────┤
+│15    │"Machine Learning + Grafos é o futuro"           │3       │1          │4               │
+├──────┼─────────────────────────────────────────────────┼────────┼───────────┼────────────────┤
+│7     │"Grafos ajudam a descobrir conexões ocultas"     │2       │1          │3               │
+├──────┼─────────────────────────────────────────────────┼────────┼───────────┼────────────────┤
+│8     │"Python com grafos é muito poderoso"             │2       │1          │3               │
+├──────┼─────────────────────────────────────────────────┼────────┼───────────┼────────────────┤
+│11    │"Redes sociais são grafos na prática"            │2       │1          │3               │
+├──────┼─────────────────────────────────────────────────┼────────┼───────────┼────────────────┤
+│12    │"Recomendação funciona melhor com grafos"        │2       │1          │3               │
+├──────┼─────────────────────────────────────────────────┼────────┼───────────┼────────────────┤
+│14    │"Relacionamentos são cidadãos de primeira classe"│2       │1          │3               │
+├──────┼─────────────────────────────────────────────────┼────────┼───────────┼────────────────┤
+│10    │"Dados bem modelados fazem toda a diferença"     │1       │1          │2               │
+├──────┼─────────────────────────────────────────────────┼────────┼───────────┼────────────────┤
+│13    │"Cypher é mais intuitivo do que SQL"             │1       │1          │2               │
+└──────┴─────────────────────────────────────────────────┴────────┴───────────┴────────────────┘
+
+
+
+-Quem mais interage (curte + comenta)?
+
+MATCH (u:User_name)
+OPTIONAL MATCH (u)-[:LIKED]->()
+WITH u, COUNT(*) AS curtidas
+OPTIONAL MATCH (u)-[:COMMENTED]->()
+WITH u, curtidas, COUNT(*) AS comentarios
+RETURN u.name AS usuario,
+       curtidas,
+       comentarios,
+       (curtidas + comentarios) AS totalInteracoes
+ORDER BY totalInteracoes DESC;
+
+
+****RESPOSTA****
+
+╒══════════════════╤════════╤═══════════╤═══════════════╕
+│usuario           │curtidas│comentarios│totalInteracoes│
+╞══════════════════╪════════╪═══════════╪═══════════════╡
+│"ana.silva"       │4       │1          │5              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"bruno.martins"   │4       │1          │5              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"lucas.ribeiro"   │4       │1          │5              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"marina.teixeira" │4       │1          │5              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"carla.rocha"     │3       │1          │4              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"paulo.gomes"     │3       │1          │4              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"eduarda.lima"    │2       │1          │3              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"felipe.santos"   │2       │1          │3              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"gabriela.pires"  │2       │1          │3              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"henrique.costa"  │2       │1          │3              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"isabela.nunes"   │2       │1          │3              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"joao.vieira"     │2       │1          │3              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"nicolas.barros"  │2       │1          │3              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"william.farias"  │1       │2          │3              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"daniela.lopes"   │1       │1          │2              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"enzo.batista"    │1       │1          │2              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"diego.alves"     │1       │1          │2              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"karen.melo"      │1       │1          │2              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"olivia.freitas"  │1       │1          │2              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"rafaela.torres"  │1       │1          │2              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"thiago.araujo"   │1       │1          │2              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"vanessa.moura"   │1       │1          │2              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"beatriz.cunha"   │1       │1          │2              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"caio.peixoto"    │1       │1          │2              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"fernanda.ramos"  │1       │1          │2              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"gustavo.reis"    │1       │1          │2              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"helena.pacheco"  │1       │1          │2              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"igor.machado"    │1       │1          │2              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"juliana.borges"  │1       │1          │2              │
+├──────────────────┼────────┼───────────┼───────────────┤
+│"leonardo.azevedo"│1       │1          │2              │
+└──────────────────┴────────┴───────────┴───────────────┘
+
+
+-Quem gera mais discussão?
+
+MATCH (u:User_name)-[:POSTED]->(p:Post)<-[:ON]-(:Comment)
+RETURN u.name AS usuario,
+       COUNT(*) AS totalComentarios
+ORDER BY totalComentarios DESC;
+
+****RESPOSTA****
+
+╒═══════════════╤════════════════╕
+│usuario        │totalComentarios│
+╞═══════════════╪════════════════╡
+│"ana.silva"    │4               │
+├───────────────┼────────────────┤
+│"bruno.martins"│3               │
+├───────────────┼────────────────┤
+│"carla.rocha"  │2               │
+├───────────────┼────────────────┤
+│"diego.alves"  │2               │
+├───────────────┼────────────────┤
+│"eduarda.lima" │2               │
+└───────────────┴────────────────┘
+
+-Recomendação de usuários para seguir (mesmo interesse)
+
+MATCH (u:User_name {name:"ana.silva"})-[:POSTED]->(:Post)-[:ABOUT]->(t:Topic)
+MATCH (outro:User_name)-[:POSTED]->(:Post)-[:ABOUT]->(t)
+WHERE u <> outro
+  AND NOT (u)-[:FOLLOWS]->(outro)
+RETURN outro.name AS recomendacao,
+       COUNT(DISTINCT t) AS interessesEmComum
+ORDER BY interessesEmComum DESC;
+
+****RESPOSTA****
+
+╒═════════════════╤═════════════════╕
+│recomendacao     │interessesEmComum│
+╞═════════════════╪═════════════════╡
+│"diego.alves"    │1                │
+├─────────────────┼─────────────────┤
+│"lucas.ribeiro"  │1                │
+├─────────────────┼─────────────────┤
+│"marina.teixeira"│1                │
+├─────────────────┼─────────────────┤
+│"olivia.freitas" │1                │
+└─────────────────┴─────────────────┘
